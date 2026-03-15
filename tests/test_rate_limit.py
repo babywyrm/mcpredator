@@ -2,8 +2,8 @@
 
 import pytest
 
-from mcprowler.core.models import TargetResult
-from mcprowler.checks.rate_limit import check_rate_limit
+from mcpredator.core.models import TargetResult
+from mcpredator.checks.rate_limit import check_rate_limit
 
 
 def test_rate_limit_clean_tool(result_with_tools):

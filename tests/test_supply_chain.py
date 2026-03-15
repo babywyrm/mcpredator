@@ -2,8 +2,8 @@
 
 import pytest
 
-from mcprowler.core.models import TargetResult
-from mcprowler.checks.supply_chain import check_supply_chain
+from mcpredator.core.models import TargetResult
+from mcpredator.checks.supply_chain import check_supply_chain
 
 
 def test_supply_chain_clean_tool(result_with_tools):

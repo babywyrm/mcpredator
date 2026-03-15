@@ -2,24 +2,24 @@
 
 import pytest
 
-from mcprowler.cli import parse_args
-from mcprowler.k8s.discovery import (
+from mcpredator.cli import parse_args
+from mcpredator.k8s.discovery import (
     DiscoveredEndpoint,
     discover_services,
     _get_sa_token,
 )
-from mcprowler.k8s.scanner import (
+from mcpredator.k8s.scanner import (
     GLOBAL_K8S_FINDINGS,
     _check_pod_security,
     _check_configmap_leaks,
     _check_helm_version_drift,
     _flatten_values,
 )
-from mcprowler.k8s.fingerprint import (
+from mcpredator.k8s.fingerprint import (
     _detect_framework,
     ServiceFingerprint,
 )
-from mcprowler.core.models import Finding
+from mcpredator.core.models import Finding
 
 
 def test_discover_services_no_sa_token():

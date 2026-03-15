@@ -1,4 +1,4 @@
-# mcprowler
+# mcpredator
 
 **MCP Red Teaming & Security Scanner**
 
@@ -22,23 +22,23 @@ for training, or point at any MCP server in dev/staging/prod.
 **uv (recommended):**
 ```bash
 uv pip install -e .
-mcprowler --targets http://localhost:9090
+mcpredator --targets http://localhost:9090
 ```
 
 **pip:**
 ```bash
 pip install -e .
-mcprowler --targets http://localhost:9090
+mcpredator --targets http://localhost:9090
 ```
 
 **No install (run as module):**
 ```bash
-python -m mcprowler --targets http://localhost:9090
+python -m mcpredator --targets http://localhost:9090
 ```
 
 **From PyPI** (coming soon):
 ```bash
-uv pip install mcprowler
+uv pip install mcpredator
 ```
 
 ---
@@ -47,22 +47,22 @@ uv pip install mcprowler
 
 ```bash
 # Single target
-mcprowler --targets http://localhost:2266
+mcpredator --targets http://localhost:2266
 
 # DVMCP challenges 1–10
-mcprowler --port-range localhost:9001-9010 --verbose
+mcpredator --port-range localhost:9001-9010 --verbose
 
 # Authenticated endpoint (JWT, PAT, etc.)
-mcprowler --targets https://api.githubcopilot.com/mcp/ --auth-token ghp_xxx
+mcpredator --targets https://api.githubcopilot.com/mcp/ --auth-token ghp_xxx
 
 # JSON report for CI
-mcprowler --port-range localhost:9001-9010 --json report.json
+mcpredator --port-range localhost:9001-9010 --json report.json
 
 # Differential scan (compare to baseline)
-mcprowler --targets http://localhost:9001 --baseline baseline.json
+mcpredator --targets http://localhost:9001 --baseline baseline.json
 ```
 
-All commands also work as `mcprowler` or `python3 -m mcprowler`.
+All commands also work as `mcpredator` or `python3 -m mcpredator`.
 
 ---
 
@@ -193,7 +193,7 @@ Every tool response is scanned for:
 ## CLI Reference
 
 ```
-mcprowler [OPTIONS]
+mcpredator [OPTIONS]
 
 Target Selection:
   --targets URL [URL ...]     One or more MCP target URLs
@@ -261,17 +261,17 @@ In `--safe-mode`, these are skipped while read-only tools (`get`, `list`,
 ./tests/dvmcp_reset.sh --setup-only
 
 # Terminal 2: scan
-mcprowler --port-range localhost:9001-9010 --verbose
+mcpredator --port-range localhost:9001-9010 --verbose
 ```
 
 ### Custom tool server (non-MCP /execute API)
 
 ```bash
 # Servers that use POST /execute with {"tool": "...", "query": "..."} instead of MCP
-mcprowler --targets http://localhost:5000/execute --verbose
+mcpredator --targets http://localhost:5000/execute --verbose
 
 # With custom tool names wordlist for a specific engagement
-mcprowler --targets http://localhost:5000/execute --tool-names-file my_tools.txt
+mcpredator --targets http://localhost:5000/execute --tool-names-file my_tools.txt
 ```
 
 The scanner auto-detects non-MCP tool servers by probing 20+ common
@@ -283,17 +283,17 @@ custom wordlist. All static + behavioral checks run against discovered tools.
 ### Authenticated endpoint (GitHub MCP)
 
 ```bash
-mcprowler --targets https://api.githubcopilot.com/mcp/ --auth-token ghp_xxx
+mcpredator --targets https://api.githubcopilot.com/mcp/ --auth-token ghp_xxx
 
 # Or via env var
 export MCP_AUTH_TOKEN=ghp_xxx
-mcprowler --targets https://api.githubcopilot.com/mcp/
+mcpredator --targets https://api.githubcopilot.com/mcp/
 ```
 
 ### Remote public MCP (DeepWiki)
 
 ```bash
-mcprowler --targets https://mcp.deepwiki.com/mcp
+mcpredator --targets https://mcp.deepwiki.com/mcp
 ```
 
 Use `/mcp` (Streamable HTTP), not `/sse`.
@@ -302,10 +302,10 @@ Use `/mcp` (Streamable HTTP), not `/sse`.
 
 ```bash
 # Save baseline
-mcprowler --targets http://localhost:9001 --save-baseline baseline.json
+mcpredator --targets http://localhost:9001 --save-baseline baseline.json
 
 # Later: detect regressions
-mcprowler --targets http://localhost:9001 --baseline baseline.json
+mcpredator --targets http://localhost:9001 --baseline baseline.json
 ```
 
 Reports added/removed/modified tools, resources, prompts. New tools
@@ -314,7 +314,7 @@ flagged as MEDIUM for review.
 ### JSON report for CI
 
 ```bash
-mcprowler --port-range localhost:9001-9010 --json report.json
+mcpredator --port-range localhost:9001-9010 --json report.json
 ```
 
 Exit code is 1 if any CRITICAL or HIGH findings; 0 otherwise. Use in
@@ -332,7 +332,7 @@ python -m pytest tests/ -v
 
 ## Kubernetes Deployment
 
-Deploy mcprowler as a K8s Job to scan cluster-internal MCP services and
+Deploy mcpredator as a K8s Job to scan cluster-internal MCP services and
 audit the Kubernetes posture from inside.
 
 ### Clusters with many MCPs
@@ -344,7 +344,7 @@ When a cluster has many services (dozens or hundreds of potential MCP endpoints)
 - **Cap endpoints** — Limit how many MCPs are scanned: `--k8s-max-endpoints 50`.
   Annotation-sourced endpoints are kept first; then probed; then port-match.
 - **Discover-only triage** — List endpoints without running full MCP scans:
-  `mcprowler --k8s-discover --k8s-discover-only --json endpoints.json`
+  `mcpredator --k8s-discover --k8s-discover-only --json endpoints.json`
   to export a URL list for triage or splitting across jobs.
 - **Service fingerprinting** — Uses the same worker count for parallel HTTP
   probes when enumerating frameworks and exposed actuator/debug paths.
@@ -353,16 +353,16 @@ When a cluster has many services (dozens or hundreds of potential MCP endpoints)
 
 ```bash
 # Build the image
-docker build -f mcprowler/k8s/Dockerfile -t mcprowler:latest .
+docker build -f mcpredator/k8s/Dockerfile -t mcpredator:latest .
 
 # Deploy (read-only cluster access)
-kubectl apply -k mcprowler/k8s/manifests/
+kubectl apply -k mcpredator/k8s/manifests/
 
 # Optional: enable full RBAC auditing (SA blast radius mapping)
-kubectl apply -f mcprowler/k8s/manifests/rbac-impersonate.yaml
+kubectl apply -f mcpredator/k8s/manifests/rbac-impersonate.yaml
 
 # Check results
-kubectl logs -n mcprowler -l app.kubernetes.io/name=mcprowler
+kubectl logs -n mcpredator -l app.kubernetes.io/name=mcpredator
 ```
 
 > **Note:** The base deployment grants read-only access to services, pods,
@@ -392,7 +392,7 @@ kubectl logs -n mcprowler -l app.kubernetes.io/name=mcprowler
 Use the CronJob manifest for periodic auditing:
 
 ```bash
-kubectl apply -f mcprowler/k8s/manifests/cronjob.yaml
+kubectl apply -f mcpredator/k8s/manifests/cronjob.yaml
 ```
 
 Default schedule: every 6 hours. Edit the `spec.schedule` field to change.
@@ -418,10 +418,10 @@ args:
 ## Project Structure
 
 ```
-mcprowler/                     # repo root
-├── mcprowler/                 # Python package
+mcpredator/                     # repo root
+├── mcpredator/                 # Python package
 │   ├── __init__.py            # Version, package docstring
-│   ├── __main__.py            # Entry point (python -m mcprowler)
+│   ├── __main__.py            # Entry point (python -m mcpredator)
 │   ├── cli.py                 # Argument parsing
 │   ├── scanner.py             # Scan orchestration, parallel execution, cross-target analysis
 │   ├── diff.py                # Differential scanning (baseline save/load/compare)
@@ -537,16 +537,16 @@ git clone https://github.com/harishsg993010/damn-vulnerable-MCP-server.git \
 
 # Or step by step:
 ./tests/dvmcp_reset.sh                  # reset + start servers
-mcprowler --port-range localhost:9001-9010 --verbose
+mcpredator --port-range localhost:9001-9010 --verbose
 
 # Scan specific challenges
-mcprowler --targets http://localhost:9002 http://localhost:9008
+mcpredator --targets http://localhost:9002 http://localhost:9008
 
 # Deeper rug pull probing (more calls per tool)
-mcprowler --port-range localhost:9001-9010 --probe-calls 10
+mcpredator --port-range localhost:9001-9010 --probe-calls 10
 
 # Static-only scan (no tool calls)
-mcprowler --port-range localhost:9001-9010 --no-invoke
+mcpredator --port-range localhost:9001-9010 --no-invoke
 
 # Kill servers + clean state
 ./tests/dvmcp_reset.sh --kill-only

@@ -1,4 +1,4 @@
-# mcprowler Changelog
+# mcpredator Changelog
 
 All notable changes to this submodule are documented here.
 
@@ -6,7 +6,7 @@ All notable changes to this submodule are documented here.
 
 ### Added
 
-- **Kubernetes deployment and in-cluster scanning** — Run mcprowler as a K8s Job with full cluster posture auditing:
+- **Kubernetes deployment and in-cluster scanning** — Run mcpredator as a K8s Job with full cluster posture auditing:
   - `k8s/discovery.py` — Auto-discover MCP endpoints via service annotations (`mcp.io/enabled`, `mcp.io/transport`, `mcp.io/path`), well-known port matching, and active MCP protocol probing
   - `k8s/scanner.py` — Enhanced with pod security checks (privileged containers, hostNetwork/PID, dangerous capabilities, hostPath mounts, missing resource limits), ConfigMap secret scanning, and NetworkPolicy auditing
   - `k8s/fingerprint.py` — Internal service fingerprinting: detects Spring Boot, Flask, Express, FastAPI, Django, Go, Envoy, Nginx, ASP.NET; probes for exposed actuator, debug/pprof, swagger/openapi, graphiql, and admin endpoints
@@ -104,7 +104,7 @@ All notable changes to this submodule are documented here.
   - `--save-baseline FILE` — Save current scan as baseline for future comparison
   - Reports added/removed/modified tools, resources, prompts
   - New tools flagged as MEDIUM findings for security review
-  - `mcprowler/diff.py` — `load_baseline`, `save_baseline`, `diff_against_baseline`, `print_diff_report`
+  - `mcpredator/diff.py` — `load_baseline`, `save_baseline`, `diff_against_baseline`, `print_diff_report`
 
 - **New security checks**
   - `check_rate_limit` — Flags tools that suggest unbounded or unthrottled usage (e.g. "unlimited requests", "no rate limit")
