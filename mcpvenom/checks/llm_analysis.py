@@ -32,9 +32,9 @@ def run_llm_analysis(
 
     # Phase 1: Tool description analysis
     with time_check("llm_tool_analysis", result):
-        _log("  [cyan]AI analyzing tool definitions...[/cyan]")
+        _log("  [cyan]AI Phase 1: Analyzing tool definitions...[/cyan]")
         try:
-            llm_findings = analyze_tools(result.tools, model=model)
+            llm_findings = analyze_tools(result.tools, model=model, log=_log)
             for f in llm_findings:
                 tax = f" [{f.taxonomy_id}]" if f.taxonomy_id else ""
                 result.add(
@@ -43,28 +43,35 @@ def run_llm_analysis(
                     f"[AI]{tax} {f.title}",
                     f.detail,
                 )
-            _log(f"  [dim]  AI found {len(llm_findings)} issue(s) in tool definitions[/dim]")
+            _log(f"  [green]  Phase 1 complete: {len(llm_findings)} finding(s)[/green]")
+        except KeyboardInterrupt:
+            _log(f"  [yellow]  Phase 1 interrupted[/yellow]")
+            return
         except Exception as e:
-            _log(f"  [yellow]  AI tool analysis failed: {e}[/yellow]")
+            _log(f"  [yellow]  Phase 1 failed: {e}[/yellow]")
 
-    # Phase 2: Response analysis (if behavioral probes are enabled)
+    # Phase 2: Response analysis (call tools, analyze what comes back)
     if not no_invoke:
         with time_check("llm_response_analysis", result):
-            _log("  [cyan]AI analyzing tool responses...[/cyan]")
+            _log("  [cyan]AI Phase 2: Calling tools and analyzing responses...[/cyan]")
             response_findings = 0
             try:
-                for tool in result.tools[:5]:
+                for tool in result.tools[:6]:
                     if not _should_invoke(tool, opts):
+                        _log(f"  [dim]  Skipping dangerous tool: {tool.get('name', '?')}[/dim]")
                         continue
                     name = tool.get("name", "")
                     desc = tool.get("description", "")
                     args = _build_safe_args(tool)
+                    _log(f"  [dim]  Calling tool '{name}' with args: {args}[/dim]")
                     resp = _call_tool(session, name, args)
                     text = _response_text(resp)
                     if not text or len(text) < 20:
+                        _log(f"  [dim]  Tool '{name}' returned empty/short response, skipping[/dim]")
                         continue
 
-                    llm_resp_findings = analyze_response(name, desc, text, model=model)
+                    _log(f"  [dim]  Tool '{name}' returned {len(text)} chars, sending to Claude...[/dim]")
+                    llm_resp_findings = analyze_response(name, desc, text, model=model, log=_log)
                     for f in llm_resp_findings:
                         tax = f" [{f.taxonomy_id}]" if f.taxonomy_id else ""
                         result.add(
@@ -74,20 +81,25 @@ def run_llm_analysis(
                             f.detail,
                         )
                         response_findings += 1
-                _log(f"  [dim]  AI found {response_findings} issue(s) in tool responses[/dim]")
+                _log(f"  [green]  Phase 2 complete: {response_findings} finding(s) in tool responses[/green]")
+            except KeyboardInterrupt:
+                _log(f"  [yellow]  Phase 2 interrupted[/yellow]")
+                return
             except Exception as e:
-                _log(f"  [yellow]  AI response analysis failed: {e}[/yellow]")
+                _log(f"  [yellow]  Phase 2 failed: {e}[/yellow]")
+    else:
+        _log("  [dim]  Phase 2 skipped (--no-invoke): use --safe-mode to enable response analysis[/dim]")
 
     # Phase 3: Chain reasoning over all findings
     with time_check("llm_chain_reasoning", result):
-        _log("  [cyan]AI reasoning about attack chains...[/cyan]")
+        _log("  [cyan]AI Phase 3: Reasoning about attack chains...[/cyan]")
         try:
             existing = [
                 {"check": f.check, "severity": f.severity, "title": f.title}
                 for f in result.findings
                 if not f.check.startswith("llm_")
             ]
-            chain_findings = analyze_findings(result.tools, existing, model=model)
+            chain_findings = analyze_findings(result.tools, existing, model=model, log=_log)
             for f in chain_findings:
                 tax = f" [{f.taxonomy_id}]" if f.taxonomy_id else ""
                 result.add(
@@ -96,6 +108,8 @@ def run_llm_analysis(
                     f"[AI]{tax} {f.title}",
                     f.detail,
                 )
-            _log(f"  [dim]  AI identified {len(chain_findings)} attack chain(s)/insight(s)[/dim]")
+            _log(f"  [green]  Phase 3 complete: {len(chain_findings)} chain(s)/insight(s)[/green]")
+        except KeyboardInterrupt:
+            _log(f"  [yellow]  Phase 3 interrupted[/yellow]")
         except Exception as e:
-            _log(f"  [yellow]  AI chain reasoning failed: {e}[/yellow]")
+            _log(f"  [yellow]  Phase 3 failed: {e}[/yellow]")

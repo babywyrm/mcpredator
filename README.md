@@ -77,6 +77,10 @@ Or run `./walkthrough/demo.sh` for the fully automated version.
 # Differential scan (compare to baseline)
 ./scan --targets http://localhost:9001 --baseline baseline.json
 
+# AI-powered analysis (requires ANTHROPIC_API_KEY)
+./scan --targets http://localhost:9002/sse --claude --verbose
+./scan --targets http://localhost:9002/sse --claude --claude-model claude-opus-4-20250514
+
 # Run tests
 uv run pytest tests/ -v
 ```
@@ -264,6 +268,33 @@ Kubernetes:
 | **Full** | (default) | Static + all behavioral probes | Dev/staging, DVMCP, CTFs |
 | **Safe** | `--safe-mode` | Static + probes on read-only tools only | Prod servers with mixed tool risk |
 | **Static** | `--no-invoke` | Static checks only, no tool calls | Prod servers, zero side-effect risk |
+| **AI** | `--claude` | All checks + Claude analysis | Deep analysis, subtle vuln hunting |
+
+### AI-Powered Analysis (Claude)
+
+Add `--claude` to any scan to layer LLM reasoning on top of deterministic checks.
+Requires `ANTHROPIC_API_KEY` env var. Install with `uv pip install -e ".[ai]"`.
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# Sonnet (fast, default)
+./scan --targets http://localhost:9002/sse --claude --verbose
+
+# Opus (deepest reasoning)
+./scan --targets http://localhost:9002/sse --claude --claude-model claude-opus-4-20250514
+```
+
+Claude runs three analysis phases after the deterministic scan:
+
+| Phase | What it does | Time |
+|-------|-------------|------|
+| **Tool analysis** | Reads tool definitions for subtle poisoning, social engineering, and logical risks that regex misses | ~5s |
+| **Response analysis** | Scans actual tool output for obfuscated injection, hidden instructions, and credential leakage | ~10s |
+| **Chain reasoning** | Reviews all findings and reasons about multi-step attack paths, escalation routes, and compound risks | ~10s |
+
+AI findings are prefixed with `[AI]` and include taxonomy IDs (e.g. `[AI] [MCP-T03]`).
+They appear alongside deterministic findings in the same report.
 
 Tools are classified as **dangerous** if their name contains keywords like
 `delete`, `execute`, `send`, `write`, `deploy`, `kill`, `transfer`, etc.

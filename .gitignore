@@ -35,3 +35,14 @@ htmlcov/
 uv.lock
 tests/test_targets/
 1/
+
+# Scan output
+walkthrough/report.json
+
+# Secrets — never commit these
+**/.*KEY*
+**/__KEY*
+*.pem
+*.key
+.env.local
+.env.*.local

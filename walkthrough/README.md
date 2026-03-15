@@ -14,11 +14,19 @@ finding in terms of what an attacker could actually do.
 **Automated (recommended):**
 
 ```bash
+# Standard demo — deterministic checks, no API key needed
 ./walkthrough/demo.sh
+
+# AI demo — adds Claude reasoning (requires ANTHROPIC_API_KEY)
+export ANTHROPIC_API_KEY=sk-ant-...
+./walkthrough/demo_ai.sh           # Sonnet (fast)
+./walkthrough/demo_ai.sh --opus    # Opus (deepest analysis)
 ```
 
-Handles everything: installs mcpvenom, starts DVMCP via Docker, runs
-progressive scans with annotations, and offers cleanup at the end.
+`demo.sh` handles everything: installs mcpvenom, starts DVMCP via Docker,
+runs progressive scans with annotations, and offers cleanup at the end.
+`demo_ai.sh` does the same but adds Claude analysis — showing the difference
+between deterministic and AI-powered findings side by side.
 
 **Manual setup:**
 
@@ -313,9 +321,36 @@ threat taxonomy:
 
 ---
 
+## Bonus: AI-Powered Analysis
+
+Add `--claude` to any scan to layer Claude's reasoning on top of the
+deterministic checks. This catches subtle issues that regex patterns miss:
+social engineering in descriptions, logical attack chains, and
+context-dependent risks.
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# Sonnet (fast, good for iteration)
+./scan --targets http://localhost:9002/sse --no-invoke --claude --verbose
+
+# Opus (deepest reasoning — catches lateral movement, privilege escalation chains)
+./scan --targets http://localhost:9009/sse --no-invoke --claude --claude-model claude-opus-4-20250514 --verbose
+```
+
+AI findings are prefixed with `[AI]` in the output. In our testing against
+DVMCP Challenge 9, Opus increased the risk score from 134 to 206 by
+identifying lateral movement paths and privilege escalation chains that
+the deterministic scanner couldn't reason about.
+
+Install the AI dependency: `uv pip install -e ".[ai]"`
+
+---
+
 ## Next Steps
 
 - **Scan your own MCP servers**: `./scan --targets http://your-server:port/mcp -v`
+- **AI-powered deep scan**: `./scan --targets URL --claude --claude-model claude-opus-4-20250514`
 - **Authenticated targets**: `./scan --targets URL --oidc-url KEYCLOAK_URL --client-id ID --client-secret SECRET`
 - **Add to CI**: `./scan --targets URL --json report.json` (exits 1 on CRITICAL/HIGH)
 - **Run the test suite**: `uv run pytest tests/ -v`
