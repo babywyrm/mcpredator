@@ -40,6 +40,7 @@ from mcpredator.checks.tool_probes import (
     check_temporal_consistency,
     check_resource_poisoning,
 )
+from mcpredator.checks.response_credentials import check_response_credentials
 
 
 def run_all_checks(
@@ -90,6 +91,7 @@ def run_all_checks(
         check_error_leakage(session, result, probe_opts=opts)
         check_temporal_consistency(session, result, probe_opts=opts)
         check_resource_poisoning(session, result)
+        check_response_credentials(session, result, probe_opts=opts)
         check_state_mutation(session, result)
         check_notification_abuse(session, result)
 

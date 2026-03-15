@@ -173,19 +173,29 @@ _Roadmap aligned with [MCP Red Team Playbook](https://github.com/babywyrm/sysadm
 - **SARIF export** — Export findings as SARIF for IDE/CI (VS Code, GitHub Code Scanning)
 - **Encoding bypass probes** (MCP-T01) — Hex, base64, unicode homoglyph, delimiter escape variants for prompt injection
 
-### Medium effort — new checks from playbook taxonomy
+### Medium effort — new checks from playbook taxonomy + internal testing
 
-- **JWT audience validation** (MCP-T04) — Decode JWT tokens, verify `aud` claim matches the target MCP endpoint, detect cross-tool token replay
-- **Active SSRF probing** (MCP-T06) — Beyond pattern matching: probe tools with IMDS URLs (169.254.169.254), internal K8s API, RFC1918 ranges, DNS rebinding detection, IP encoding bypasses (decimal, hex, octal, IPv6-mapped)
-- **Confused deputy detection** (MCP-T03) — Check if tool calls propagate user identity vs agent SA; detect privilege gaps between caller and tool permissions
-- **Exfiltration flow analysis** (MCP-T12) — Track data flow across tools: flag when a read-tool's output feeds into a communication-tool's input (Slack, email, webhook)
-- **Audit log evasion** (MCP-T13) — Verify that downstream audit logs attribute actions to the originating user, not just the agent service account
-- **AI-powered description analysis** — Use LLM to detect subtle tool poisoning, hidden instructions, misleading descriptions that bypass regex
+_Gaps identified from [MCP Red Team Playbook](https://github.com/babywyrm/sysadmin/tree/master/mcp/redteam) and testing against internal MCP targets with Keycloak, K8s, and LLM integration._
+
+- **JWT audience validation** (MCP-T04) — Decode JWT tokens, verify `aud` claim matches the target MCP endpoint, detect cross-tool token replay. Flag servers with `verify_aud: False`.
+- **Cross-role token replay** (MCP-T04) — If a token is provided, attempt `tools/list` and `tools/call` for tools outside the token's role to detect role-only isolation gaps (e.g. same OIDC realm for users and agents).
+- **Response credential scanning** (MCP-T07) — Scan ALL tool response content (not just errors) for credential patterns. Catches incomplete env var redaction where secrets like `CLIENT_SECRET` slip through regex filters.
+- **LLM-mediated response detection** — Detect when tool responses are LLM-generated (hallucination risk, context bleed). Flag tools whose output shows LLM patterns (Ollama/OpenAI formatting, system prompt leakage through tool output).
+- **AI prompt injection via tool parameters** — Detect when user-controlled tool parameters are passed into LLM prompts, creating an injection surface through tool args rather than tool descriptions.
+- **Active SSRF probing** (MCP-T06) — Beyond pattern matching: probe tools with IMDS URLs (169.254.169.254), internal K8s API, RFC1918 ranges, DNS rebinding detection, IP encoding bypasses (decimal, hex, octal, IPv6-mapped).
+- **Interpreter blocklist bypass** — Input sanitization probes should try multiple interpreters beyond bash/python: `perl`, `lua`, `awk`, `ruby`, `php`, `node`. Real-world blocklists often miss less common shells.
+- **Actuator/debug endpoint probing** — Probe scan targets for exposed Spring Boot actuator (`/actuator/env`, `/actuator/beans`), Flask debug, pprof, Swagger, and GraphiQL. Actuator endpoints commonly leak signing keys and credentials.
+- **DPoP token support** (RFC 9449) — `--dpop-key FILE` flag to sign DPoP proofs with `htm`/`htu` claims for RFC 9449-protected MCP gateways.
+- **Confused deputy detection** (MCP-T03) — Check if tool calls propagate user identity vs agent SA; detect privilege gaps between caller and tool permissions.
+- **Exfiltration flow analysis** (MCP-T12) — Track data flow across tools: flag when a read-tool's output feeds into a communication-tool's input (Slack, email, webhook).
+- **Audit log evasion** (MCP-T13) — Verify that downstream audit logs attribute actions to the originating user, not just the agent service account.
+- **AI-powered description analysis** — Use LLM to detect subtle tool poisoning, hidden instructions, misleading descriptions that bypass regex.
 
 ### Larger investments — campaign framework
 
 - **Multi-stage campaign runner** (playbook Section 5) — Chain individual checks into named attack scenarios (CONTENT-TO-INFRA, COMMS-TO-CLUSTER, CODE-TO-PROD, etc.) with stage-gating and blast radius tracking
 - **Purple team mode** — `--purple-team`: timestamp every attack, measure MTTD/MTTR, generate detection scorecard, SIEM alert correlation
+- **LLM-as-proxy detection** — Detect when an LLM sits between the user and dangerous tools (e.g. chat endpoint → LLM → shell exec tool). Map the indirect execution path and flag the amplified blast radius.
 - **Agent config tampering** (MCP-T09) — Detect if an agent can write its own config, system prompt, or tool registry via any connected MCP
 - **Hallucination-driven destruction** (MCP-T10) — Send ambiguous instructions to tool-calling endpoints, verify confirmation gates and dry-run behavior before destructive ops
 - **Cross-tenant memory leak** (MCP-T11) — Plant canary strings via one session, probe retrieval from another; test vector DB tenant isolation

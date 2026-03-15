@@ -39,6 +39,8 @@ ATTACK_CHAIN_PATTERNS = [
     ("notification_abuse", "token_theft"),
     ("cross_tool_manipulation", "code_execution"),
     ("cross_tool_manipulation", "token_theft"),
+    ("response_credentials", "token_theft"),
+    ("response_credentials", "remote_access"),
 ]
 
 SHADOW_TARGETS = {
