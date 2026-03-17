@@ -174,6 +174,70 @@ where vulnerabilities hide.
 
 ---
 
+## Step 3b: AI Response Analysis — Challenge 4 with Claude
+
+This is where the three layers stack. Add `--claude` to a behavioral scan
+and Claude analyzes the actual tool responses — catching things no regex
+pattern would ever flag.
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+./scan --targets http://localhost:9004/sse --safe-mode --claude --claude-model claude-opus-4-20250514 --verbose
+```
+
+### The three analysis layers
+
+```
+Layer 1: Deterministic checks (regex patterns)
+  → schema_risk, auth, sse_security
+  → Fast, free, catches obvious issues
+
+Layer 2: Behavioral probes (call tools, analyze responses)
+  → deep_rug_pull: tool output changed after repeated calls
+  → input_sanitization: canary reflected unsanitized
+  → tool_response_injection: input echoed in responses
+  → Catches runtime behavior static analysis misses
+
+Layer 3: Claude AI reasoning (reads everything, reasons about chains)
+  → Phase 1: Analyzes tool definitions for subtle risks
+  → Phase 2: Reads actual tool responses for social engineering
+  → Phase 3: Chains all findings into multi-step attack paths
+  → Catches meaning, intent, and logical chains
+```
+
+### What Claude found in Challenge 4 that nothing else caught
+
+**`llm_response_analysis` MEDIUM — "Social engineering attempt through fake
+paywall"**
+
+Claude read the actual `get_weather` response and noticed it claims an API
+rate limit and asks for payment for a "premium plan." This is the rug pull
+in action — the tool starts returning fake paywall messages after repeated
+calls, trying to manipulate the LLM into believing it needs to pay.
+
+No regex pattern would flag this. It's a natural-language social engineering
+attack embedded in a tool response, and Claude caught it by *reading and
+reasoning about* what the tool returned.
+
+**`llm_chain_reasoning` CRITICAL — "Cross-Origin MCP Hijacking Attack Chain"**
+
+Claude chained together: unauthenticated access + CORS misconfiguration +
+SSE stream access = a full cross-origin attack where a malicious website
+can invoke MCP tools on behalf of a visitor.
+
+### Score comparison across layers
+
+| Layer | Findings | Score | What it caught |
+|-------|----------|-------|---------------|
+| Static only (`--no-invoke`) | 5 | 26 | Schema risks, auth, SSE |
+| + Behavioral (`--safe-mode`) | 6 | 36 | Rug pull detection |
+| + Claude Opus (`--claude`) | 10 | 64 | Paywall social engineering, attack chains |
+
+Each layer catches what the previous one can't. Together they provide
+comprehensive coverage.
+
+---
+
 ## Step 4: Credential Theft — Challenges 5, 7
 
 ```bash

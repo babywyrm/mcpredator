@@ -285,13 +285,30 @@ export ANTHROPIC_API_KEY=sk-ant-...
 ./scan --targets http://localhost:9002/sse --claude --claude-model claude-opus-4-20250514
 ```
 
-Claude runs three analysis phases after the deterministic scan:
+mcpvenom uses a three-layer analysis architecture. Each layer catches what
+the previous one can't:
 
-| Phase | What it does | Time |
-|-------|-------------|------|
-| **Tool analysis** | Reads tool definitions for subtle poisoning, social engineering, and logical risks that regex misses | ~5s |
-| **Response analysis** | Scans actual tool output for obfuscated injection, hidden instructions, and credential leakage | ~10s |
-| **Chain reasoning** | Reviews all findings and reasons about multi-step attack paths, escalation routes, and compound risks | ~10s |
+```
+Layer 1: Deterministic (regex patterns)     — what tools SAY
+Layer 2: Behavioral (call tools, probe)     — what tools DO
+Layer 3: Claude AI (read, reason, chain)    — what tools MEAN
+```
+
+Claude runs three phases after deterministic + behavioral checks:
+
+| Phase | What it does | Example finding |
+|-------|-------------|----------------|
+| **Tool analysis** | Reads definitions for subtle poisoning, social engineering, logical risks | "These tools chain into a privilege escalation path" |
+| **Response analysis** | Reads actual tool output for manipulation, hidden intent, credential leakage | "Tool response is a fake paywall — social engineering the LLM" |
+| **Chain reasoning** | Connects all findings into multi-step attack scenarios | "Unauthenticated access → command injection → lateral movement → persistence" |
+
+Real example from DVMCP Challenge 4 (Rug Pull):
+
+| Layer | Findings | Score |
+|-------|----------|-------|
+| Deterministic only | 5 (schema_risk, auth, SSE) | 26 |
+| + Behavioral probes | 6 (+ deep_rug_pull) | 36 |
+| + Claude Opus | 10 (+ social engineering, attack chains) | 64 |
 
 AI findings are prefixed with `[AI]` and include taxonomy IDs (e.g. `[AI] [MCP-T03]`).
 They appear alongside deterministic findings in the same report.

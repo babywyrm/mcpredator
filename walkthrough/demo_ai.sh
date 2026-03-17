@@ -153,10 +153,52 @@ echo ""
 read -p "  Press Enter to continue..." </dev/tty
 
 # ══════════════════════════════════════════════════════════════
-# Phase 3: Attack Chains — Where Claude Shines
+# Phase 3: Three-Layer Analysis — Rug Pull (Challenge 4)
 # ══════════════════════════════════════════════════════════════
 
-banner "Phase 3: Remote Access (Challenge 9) — Claude Chain Reasoning"
+banner "Phase 3: Three-Layer Analysis — Rug Pull (Challenge 4)"
+
+explain "This is the key insight: three analysis layers that stack."
+explain ""
+explain "Challenge 4 has a 'get_weather' tool that changes behavior after"
+explain "repeated calls (rug pull). Watch how each layer catches something"
+explain "the previous layer can't."
+explain ""
+explain "Running --safe-mode + --claude so all three layers fire:"
+explain "  Layer 1: Deterministic regex checks"
+explain "  Layer 2: Behavioral probes (call tools, analyze responses)"
+explain "  Layer 3: Claude AI reasoning (read responses, chain findings)"
+echo ""
+
+$SCAN --targets http://localhost:9004/sse --safe-mode --claude --claude-model "$MODEL" --verbose 2>&1 || true
+
+echo ""
+echo -e "${BOLD}What each layer caught:${NC}"
+echo ""
+explain "Layer 1 (deterministic): schema_risk, auth, sse_security"
+explain "  → Found the obvious metadata issues"
+explain ""
+explain "Layer 2 (behavioral): deep_rug_pull"
+explain "  → Called get_weather 6 times, detected the response changed"
+explain "  → The tool started returning fake paywall messages"
+explain ""
+explain "Layer 3 (Claude AI): social engineering in tool response"
+explain "  → READ the paywall response and recognized it as social engineering"
+explain "  → A fake rate limit trying to manipulate the LLM into paying"
+explain "  → No regex pattern would ever catch this"
+explain ""
+explain "This is the power of the three-layer approach:"
+explain "  Static catches what tools SAY (metadata)"
+explain "  Behavioral catches what tools DO (runtime)"
+explain "  Claude catches what tools MEAN (intent)"
+echo ""
+read -p "  Press Enter to continue..." </dev/tty
+
+# ══════════════════════════════════════════════════════════════
+# Phase 3b: Attack Chains — Where Claude Shines
+# ══════════════════════════════════════════════════════════════
+
+banner "Phase 3b: Remote Access (Challenge 9) — Claude Chain Reasoning"
 
 explain "Challenge 9 has 'remote_access' (command execution on remote systems)"
 explain "and 'manage_permissions' (RBAC manipulation)."
