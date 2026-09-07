@@ -460,7 +460,7 @@ def _check_session_token_exposure(
             continue
         container_name = containers[0].get("name", "")
 
-        for search_dir in _SESSION_TOKEN_PATHS[:3]:
+        for search_dir in _SESSION_TOKEN_PATHS:
             exec_cmd = f"find {search_dir} -name '*.json' -size +50c -maxdepth 2 2>/dev/null | head -5"
             exec_url = (
                 f"{base_url}/api/v1/namespaces/{namespace}/pods/{pod_name}"

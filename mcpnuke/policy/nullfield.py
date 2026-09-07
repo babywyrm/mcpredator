@@ -97,14 +97,15 @@ def _manual_yaml(policy: dict) -> str:
             lines.append(f"      {json.dumps(k)}: {json.dumps(v)}")
     else:
         lines.append("    matchLabels: {}")
-    lines.append("  rules:")
+    rules = policy["spec"]["rules"]
+    lines.append("  rules:" if rules else "  rules: []")
 
-    for rule in policy["spec"]["rules"]:
+    for rule in rules:
         lines.append(f"    - action: {rule['action']}")
         lines.append(f"      mcpMethod: {rule['mcpMethod']}")
         tools = json.dumps(rule["toolNames"])
         lines.append(f"      toolNames: {tools}")
-        lines.append(f"      reason: \"{rule['reason']}\"")
+        lines.append(f"      reason: {json.dumps(rule['reason'])}")
         for key in ("hold", "scope", "budget"):
             if key in rule:
                 lines.append(f"      {key}:")

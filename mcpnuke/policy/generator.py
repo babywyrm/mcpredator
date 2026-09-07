@@ -17,8 +17,6 @@ _ARROW_SPLIT: re.Pattern[str] = re.compile(r"\s*(?:→|->)\s*")
 
 def generate_policy(
     results: list[TargetResult],
-    policy_name: str = "mcpnuke-recommended",
-    namespace: str = "",
 ) -> list[PolicyRule]:
     """Convert scan findings into a deduplicated list of nullfield policy rules.
 
@@ -27,6 +25,9 @@ def generate_policy(
     Proved multi-hop findings emit DENY on the sink and HOLD on sources;
     those findings skip the generic FINDING_TO_ACTION single-tool map so
     sources are not accidentally DENY'd by the same finding.
+
+    Policy name/namespace live on :func:`mcpnuke.policy.serialize_policy`,
+    not here — this function only produces rules.
     """
     tool_rules: dict[str, PolicyRule] = {}
 

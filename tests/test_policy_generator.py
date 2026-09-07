@@ -371,11 +371,16 @@ class TestSerializationStructure:
         assert budget["onExhausted"] == "DENY"
 
     def test_empty_rules_list_is_valid_yaml(self):
-        # ponytail: serializer emits a bare "rules:" key, which YAML loads
-        # as None rather than []; both decode as "no rules" for a CRD.
         loaded = yaml.safe_load(serialize_policy([]))
         assert loaded["kind"] == "NullfieldPolicy"
-        assert not loaded["spec"]["rules"]
+        assert loaded["spec"]["rules"] == []
+
+    def test_reason_with_quotes_round_trips(self):
+        """A reason containing double quotes must not break the YAML."""
+        rules = [PolicyRule(action="DENY", tool_names=["a.b"],
+                            reason='saw "admin" scope in token')]
+        loaded = yaml.safe_load(serialize_policy(rules))
+        assert loaded["spec"]["rules"][0]["reason"] == 'saw "admin" scope in token'
 
     def test_namespace_omitted_when_empty(self):
         loaded = yaml.safe_load(serialize_policy(

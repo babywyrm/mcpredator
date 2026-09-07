@@ -126,9 +126,9 @@ def test_signature_param_is_safe(result_with_tools):
     assert len(r.findings) == 0
 
 
-def test_param_with_signature_substring_is_safe(result_with_tools):
-    """Characterization: signature detection in params is a substring match,
-    so a param named 'design' (contains 'sign') also suppresses the finding."""
+def test_param_named_design_does_not_suppress(result_with_tools):
+    """Regression: signature detection is word-boundary matched — a param
+    named 'design' merely contains 'sign' and must NOT suppress the finding."""
     r = result_with_tools([
         {
             "name": "send_message",
@@ -137,6 +137,41 @@ def test_param_with_signature_substring_is_safe(result_with_tools):
                 "properties": {
                     "message": {"type": "string"},
                     "design": {"type": "string"},
+                }
+            },
+        }
+    ])
+    check_insecure_agent_comms(r)
+    hits = [f for f in r.findings if f.check == "insecure_agent_comms"]
+    assert len(hits) == 1
+    assert hits[0].severity == "HIGH"
+
+
+def test_description_designed_does_not_suppress(result_with_tools):
+    """Regression: 'designed' in the description contains 'sign' but must
+    not count as a signature control."""
+    r = result_with_tools([
+        {
+            "name": "send_message",
+            "description": "Designed for sending messages between agents",
+            "inputSchema": {"properties": {"message": {"type": "string"}}},
+        }
+    ])
+    check_insecure_agent_comms(r)
+    hits = [f for f in r.findings if f.check == "insecure_agent_comms"]
+    assert len(hits) == 1
+
+
+def test_inflected_signature_still_suppresses(result_with_tools):
+    """Word-boundary matching keeps real inflections: signed/signing count."""
+    r = result_with_tools([
+        {
+            "name": "send_message",
+            "description": "Send a message to another agent",
+            "inputSchema": {
+                "properties": {
+                    "message": {"type": "string"},
+                    "signing_key": {"type": "string"},
                 }
             },
         }

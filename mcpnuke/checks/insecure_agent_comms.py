@@ -11,6 +11,8 @@ Lane 4 (Agent Chain) / Transport A (MCP JSON-RPC).
 
 from __future__ import annotations
 
+import re
+
 from mcpnuke.checks._lane_helpers import lane_tagged
 from mcpnuke.checks.base import time_check
 from mcpnuke.core.models import TargetResult
@@ -37,11 +39,13 @@ _UNSIGNED_INDICATORS = frozenset({
     "notify", "broadcast", "dispatch", "delegate",
 })
 
-# Keywords that indicate signatures ARE present (safe — don't flag)
-_SIGNATURE_INDICATORS = frozenset({
-    "sign", "signature", "verify", "hmac", "mac",
-    "attest", "certificate", "jwt", "proof",
-})
+# Keywords that indicate signatures ARE present (safe — don't flag).
+# Word-boundary anchored: a bare substring match let params like "design"
+# (contains "sign") suppress findings on unsigned tools.
+_SIGNATURE_RE = re.compile(
+    r"\b(?:sign|signature|verify|hmac|mac|attest|certificate|jwt|proof)",
+    re.IGNORECASE,
+)
 
 
 def check_insecure_agent_comms(
@@ -70,11 +74,8 @@ def check_insecure_agent_comms(
                 continue
 
             # Check if signatures are mentioned (safe)
-            has_signature = any(kw in combined for kw in _SIGNATURE_INDICATORS)
-            has_sig_param = any(
-                any(kw in p.lower() for kw in _SIGNATURE_INDICATORS)
-                for p in props
-            )
+            has_signature = bool(_SIGNATURE_RE.search(combined))
+            has_sig_param = any(_SIGNATURE_RE.search(p) for p in props)
 
             if has_signature or has_sig_param:
                 continue  # Tool has signing — not vulnerable
