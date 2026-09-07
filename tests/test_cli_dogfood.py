@@ -71,7 +71,9 @@ def test_cli_scans_the_http_reference_target(tmp_path: Path) -> None:
     report = tmp_path / "http.json"
     try:
         proc = _run_cli(
-            ["--targets", server.url, "--auth-token", server.token],
+            # = form: token_urlsafe tokens can start with '-', which
+            # argparse refuses as a separate option value (~1.6% flake).
+            ["--targets", server.url, f"--auth-token={server.token}"],
             report,
         )
         assert proc.returncode == 0, proc.stdout + proc.stderr
