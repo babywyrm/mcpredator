@@ -2,7 +2,7 @@
 
 All notable changes to this submodule are documented here.
 
-## [Unreleased]
+## [6.19.0] - 2026-09-06
 
 ### Security
 
@@ -34,6 +34,30 @@ All notable changes to this submodule are documented here.
   without a recognized taxonomy ID. Also included in `--json` output.
 
 ### Fixed
+
+- **`insecure_agent_comms` signature detection is word-boundary matched.**
+  Substring matching let a parameter named `design` (contains "sign") — or a
+  description saying "designed" — suppress the unsigned-messaging finding.
+  Detection now anchors on word boundaries while still matching real
+  inflections (`signed`, `signing_key`, `verified`).
+
+- **Policy YAML serializer escapes reasons and emits empty rule lists.**
+  `_manual_yaml` interpolated `reason` into a quoted scalar unescaped, so a
+  reason containing `"` produced unparseable YAML; reasons now go through
+  `json.dumps` like every other string in the emitter. An empty rule set
+  now serializes as `rules: []` instead of a bare `rules:` (which loads as
+  `None`).
+
+- **`generate_policy` drops dead `policy_name`/`namespace` parameters.**
+  They were accepted but never used — name/namespace belong to
+  `serialize_policy`, which already takes them.
+
+- **K8s session-token probe searches all configured paths.** The exec loop
+  sliced `_SESSION_TOKEN_PATHS[:3]`, leaving `/var/tmp` and `/app/tmp`
+  permanently unsearched.
+
+- **`ai_guardrail_probe` dead branch removed.** An unreachable
+  MEDIUM/"moderate" severity assignment (leak_count == 0 already exits).
 
 - **Docs: stale mcpnuke-runner section replaced.** The CI/CD guide
   described a queue-polling camazotz sidecar that was never built; it now
