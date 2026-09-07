@@ -59,6 +59,20 @@ All notable changes to this submodule are documented here.
 - **`ai_guardrail_probe` dead branch removed.** An unreachable
   MEDIUM/"moderate" severity assignment (leak_count == 0 already exits).
 
+- **CLI dogfood test no longer flakes on dash-leading tokens.**
+  `secrets.token_urlsafe` can emit a leading `-`; argparse then rejects
+  `--auth-token <token>` as a missing argument. The test now passes
+  `--auth-token=<token>`.
+
+- **Public-target connect timeout raised to 20s.** gitmcp behind Cloudflare
+  can take ~10.5s to answer initialize; the previous 12s budget flaked.
+  Opt-in suite only (`MCP_PUBLIC_TARGETS=1`).
+
+- **Runner e2e tests use an isolated JobManager.** The hung-socket and
+  unreachable-target tests shared the module singleton's 2-worker pool
+  with leftover jobs, so under a full-suite load they sat in `running`
+  past the poll deadline.
+
 - **Docs: stale mcpnuke-runner section replaced.** The CI/CD guide
   described a queue-polling camazotz sidecar that was never built; it now
   documents the actual HTTP job API, its env vars, and a security warning

@@ -22,9 +22,21 @@ from pydantic import ValidationError  # noqa: E402
 import mcpnuke.server.app as server_app  # noqa: E402
 from mcpnuke.server.app import app  # noqa: E402
 from mcpnuke.server.models import HealthResponse, ScanDepth, ScanJob, ScanRequest, ScanStatus  # noqa: E402
-from mcpnuke.server.runner import _probe_opts_for  # noqa: E402
+from mcpnuke.server.runner import JobManager, _probe_opts_for  # noqa: E402
 
 client = TestClient(app)
+
+
+@pytest.fixture
+def live_manager(monkeypatch):
+    """Own JobManager so the e2e subprocess tests do not share the module
+    singleton. Under a full-suite load the default 2-worker pool is shared
+    with leftover jobs from other tests, and the hung-socket / unreachable
+    scans sit in ``running`` past the poll deadline."""
+    mgr = JobManager(max_workers=1, job_timeout=30)
+    monkeypatch.setattr(server_app, "_manager", mgr)
+    yield mgr
+    mgr._executor.shutdown(wait=False, cancel_futures=True)
 
 
 def test_health():
@@ -56,7 +68,7 @@ def test_get_unknown_job_404():
     assert resp.status_code == 404
 
 
-def test_scan_job_hard_timeout():
+def test_scan_job_hard_timeout(live_manager):
     """A scan that would otherwise hang must be killed at the wall-clock cap.
 
     A listening socket that accepts the connection but never replies makes the
@@ -98,7 +110,7 @@ def test_scan_job_hard_timeout():
         sink.close()
 
 
-def test_scan_lifecycle_unreachable_target():
+def test_scan_lifecycle_unreachable_target(live_manager):
     """A scan against an unreachable target should still complete (no MCP
     transport found) rather than erroring the job out."""
     resp = client.post(

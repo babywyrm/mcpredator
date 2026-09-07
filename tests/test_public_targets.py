@@ -24,12 +24,17 @@ TARGETS = {
     "context7": "https://mcp.context7.com/mcp",
 }
 
+# gitmcp sits behind Cloudflare and can take ~10.5s to answer initialize;
+# 12s was within noise of that and flaked. 20s gives real headroom — cheap
+# here because healthy targets answer in ms.
+_CONNECT_TIMEOUT = 20.0
+
 
 @skip_remote
 @pytest.mark.parametrize("name,url", list(TARGETS.items()))
 def test_transport_detected(name, url):
     """Public target should expose a valid MCP transport."""
-    session = detect_transport(url, connect_timeout=12.0)
+    session = detect_transport(url, connect_timeout=_CONNECT_TIMEOUT)
     assert session is not None, f"{name}: no transport at {url}"
     assert session.post_url, f"{name}: no post_url"
     session.close()
@@ -39,7 +44,7 @@ def test_transport_detected(name, url):
 @pytest.mark.parametrize("name,url", list(TARGETS.items()))
 def test_has_tools(name, url):
     """Public target should expose at least 1 tool."""
-    session = detect_transport(url, connect_timeout=12.0)
+    session = detect_transport(url, connect_timeout=_CONNECT_TIMEOUT)
     assert session is not None
     result = TargetResult(url=url)
     enumerate_server(session, result)
