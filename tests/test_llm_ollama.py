@@ -72,6 +72,20 @@ def test_ollama_timeout_error():
         backend.analyze_tools([{"name": "test"}], "test-model")
 
 
+def test_ollama_disables_thinking_for_structured_json():
+    """Phase 1/4 on qwen3.6:27b burned the 180s HTTP budget inside
+    chain-of-thought and never returned parseable JSON. think=false
+    forces the array the phases parse."""
+    backend = OllamaBackend(host="http://localhost:11434")
+    mock_resp = MagicMock()
+    mock_resp.json.return_value = {"message": {"content": "[]"}}
+    with patch("httpx.post", return_value=mock_resp) as post:
+        backend.analyze_tools([{"name": "t"}])
+    payload = post.call_args.kwargs["json"]
+    assert payload["think"] is False
+    assert payload["stream"] is False
+
+
 def test_cluster_findings_consensus():
     per_model = {
         "qwen3:14b": [

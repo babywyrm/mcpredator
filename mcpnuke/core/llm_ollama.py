@@ -165,6 +165,11 @@ class OllamaBackend:
         payload = {
             "model": self.model,
             "stream": False,
+            # Thinking models (qwen3.6, etc.) spend the whole HTTP timeout
+            # inside chain-of-thought and never emit the JSON the phases
+            # parse. Structured analysis always wants the array, not the
+            # reasoning trace — Ollama ignores unknown keys on older hosts.
+            "think": False,
             "options": {"num_predict": max_tokens, "temperature": 0.1},
             "messages": [
                 {"role": "system", "content": system},

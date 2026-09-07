@@ -59,6 +59,12 @@ All notable changes to this submodule are documented here.
 - **`ai_guardrail_probe` dead branch removed.** An unreachable
   MEDIUM/"moderate" severity assignment (leak_count == 0 already exits).
 
+- **Ollama structured calls disable chain-of-thought.** Thinking
+  models (qwen3.6:27b locally) spent the full 180s HTTP budget inside
+  `thinking` and timed out Phase 1 and Phase 4 with no JSON. Chat
+  payloads now send `think: false` so the model emits the array the
+  phases parse. Older Ollama hosts ignore the unknown key.
+
 - **CLI dogfood test no longer flakes on dash-leading tokens.**
   `secrets.token_urlsafe` can emit a leading `-`; argparse then rejects
   `--auth-token <token>` as a missing argument. The test now passes
