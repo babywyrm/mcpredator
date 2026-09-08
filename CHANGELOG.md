@@ -2,7 +2,7 @@
 
 All notable changes to this submodule are documented here.
 
-## [6.19.0] - 2026-09-06
+## [6.19.0] - 2026-09-07
 
 ### Security
 
@@ -64,6 +64,10 @@ All notable changes to this submodule are documented here.
   `thinking` and timed out Phase 1 and Phase 4 with no JSON. Chat
   payloads now send `think: false` so the model emits the array the
   phases parse. Older Ollama hosts ignore the unknown key.
+
+- **Ollama timeout error no longer names `--ollama-timeout`.** That flag
+  was never wired; the message now says to try a smaller model. Thinking
+  models stalling inside chain-of-thought are addressed by `think: false`.
 
 - **CLI dogfood test no longer flakes on dash-leading tokens.**
   `secrets.token_urlsafe` can emit a leading `-`; argparse then rejects

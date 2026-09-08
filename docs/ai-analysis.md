@@ -97,9 +97,16 @@ Claude runs four phases after deterministic + behavioral checks:
   a sink that queues its outbound request is not raced. `propose_chains` steers
   toward fetch/send-now sinks (or register **plus** a follow-up that fires the
   webhook) so register-only chains are not the end of the path.
-- Under `--claude`, an optional judge can upgrade transformed data movement to HIGH.
+- Any backend implementing `judge_chain_run` (Claude **or** Ollama) can
+  upgrade transformed data movement to HIGH. It is not gated on `--claude`.
 - `--chain-replay-retries N` (default 1) revises a halted chain from its
   transcript and retries. Each revise/retry attempt is logged under `--verbose`.
+
+**Ollama (`--ollama-analysis`):** drop-in for Claude — same four phases, no
+API key. `--chain-replay` uses the same propose / judge / revise hooks.
+Structured chat payloads send `think: false` so thinking models emit the
+JSON the phases parse instead of spending the HTTP timeout inside
+chain-of-thought.
 
 **Priority actions (every report):** after the severity counts, mcpnuke prints
 a short **Priority actions (fix these first)** list and writes matching

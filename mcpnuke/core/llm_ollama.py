@@ -192,7 +192,7 @@ class OllamaBackend:
         except httpx.TimeoutException as exc:
             raise RuntimeError(
                 f"Ollama timed out after {self.timeout}s (model={self.model}). "
-                "Try a smaller model or increase --ollama-timeout."
+                "Try a smaller model."
             ) from exc
 
         elapsed = time.time() - t0

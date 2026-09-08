@@ -376,8 +376,10 @@ def _add_ai_arguments(group: ArgumentGroup) -> None:
         default=None,
         help="Use a local/networked Ollama instance as the AI analysis backend instead of "
         "Claude. No API key required. Example: --ollama-analysis http://<ollama-host>:11434. "
-        "Enables the same 3-phase analysis (tool schemas, responses, chain reasoning) "
-        "at zero cloud cost. Compare results with --claude to benchmark local vs cloud quality.",
+        "Runs the same four phases as Claude (tool schemas, responses, chain reasoning, "
+        "and --chain-replay). Structured calls send think=false so thinking models emit "
+        "JSON instead of burning the HTTP timeout. Compare with --claude to benchmark "
+        "local vs cloud quality.",
     )
     group.add_argument(
         "--ollama-ensemble",

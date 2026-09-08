@@ -14,13 +14,13 @@ stoneburner's, and runtime policy enforcement is nullfield's.
 |------|-------|
 | Static metadata analysis (schema, permissions, credentials) | **Strong** — 17 static checks |
 | Behavioral probes (tool invocation, SSRF, injection, exfil) | **Strong** — 12 behavioral checks |
-| AI-augmented analysis (Claude + Ollama ensemble) | **Strong** — 3-phase analysis, consensus mode |
+| AI-augmented analysis (Claude + Ollama) | **Strong** — 4-phase analysis, ensemble consensus; Phase 4 chain replay works on Ollama as of 6.19.0 |
 | Transport security (JWT, DPoP, scope, boundaries) | **Strong** — 8 transport checks |
 | Lane coverage (5 identity lanes) | **All 5 represented** |
 | Taxonomy coverage | **54/57 IDs (95%)** — Tier 1 complete, see gap map below |
 | MCP spec surface (2026-08-22 roadmap) | **Mapped** — Speak/Scan/Ready in [docs/spec-surface.md](docs/spec-surface.md) |
 | CI integration (SARIF, --fail-on) | **Done** |
-| Actionable reporting (priority actions, fix/verify, policy) | **Done** — see below |
+| Actionable reporting (priority actions, fix/verify, policy, `--owasp`) | **Done** — see below |
 | False-positive measurement | **Done** — three harnesses, all baselined and gated; see below |
 | Distribution (PyPI, install script) | **Ready** — `install.sh` + publish workflow, both tested; upload armed by the `PYPI_PUBLISH` variable once the trusted publisher is registered |
 | CI/CD workflow for the tool itself | **CLI dogfood** — `tests.yml` scans the in-repo reference target via `python -m mcpnuke` |
@@ -135,6 +135,7 @@ Target-agnostic operator loop — labs (Camazotz / DVMCP) are oracles only:
 | **Priority actions** | Proof-ranked “fix these first” list on every console/JSON report |
 | **Impact / fix / verify** | Deterministic guidance on each priority action |
 | **`--generate-policy`** | NullfieldPolicy YAML; proved chains → DENY(sink) + HOLD(source*) |
+| **`--owasp`** | OWASP MCP Top 10 (2025) alignment report — shipped 6.19.0 |
 | **Lab baselines** | Offline fixtures in `tests/fixtures/scans/` guard A/C/B contracts in CI |
 
 ## False-positive measurement (done 2026-08-10)
@@ -199,7 +200,6 @@ and checks both console scripts before anything is uploaded.
 
 ### Horizon
 
-- **OWASP MCP Top 10 alignment report** — map every finding to OWASP MCP01–MCP15
 - **SARIF remediation** — carry Priority Action impact/fix/verify into SARIF `fixes` / help text
 - **Camazotz lab coverage tracking** — which labs exercise which checks
 
